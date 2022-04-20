@@ -23,6 +23,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->text('personality')->nullable();
             $table->unsignedBigInteger('user_id');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

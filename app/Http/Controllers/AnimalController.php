@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Animal;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 
 class AnimalController extends Controller
 {
@@ -15,12 +16,45 @@ class AnimalController extends Controller
      */
     public function index(Request $request)
     {
-      $limit = $request->limit ?? 10;
-      $animals = Animal::orderBy('id', 'desc')
-        ->paginate($limit)
-        ->appends($request->query());
+      $url = $request->url();
+      $queryParams = $request->query();
+      ksort($queryParams);
+      $queryString = http_build_query($queryParams);
+      $fullUrl = "{$url}?{$queryString}";
 
-      return response($animals, Response::HTTP_OK);
+      if (Cache::has($fullUrl)){
+        return Cache::get($fullUrl);
+      }
+
+      $limit = $request->limit ?? 10;
+
+      $query = Animal::query();
+
+      if (isset($request->filters)) {
+        $filters = explode(',', $request->filters);
+        foreach ($filters as $key => $filter) {
+           list($key, $value) = explode(':', $filter);
+           $query->where($key, 'like', "%$value%");
+        }
+      }
+
+      if (isset($request->sorts)){
+        $sorts = explode(',', $request->sorts);
+        foreach ($sorts as $key => $sort) {
+          list($key, $value) = explode(':', $sort);
+          if ($value == 'asc' || $value == 'desc'){
+             $query->orderBy($key, $value);
+          }
+        }
+      }else{
+        $query->orderBy('id', 'desc');
+      }
+
+      $animals = $query->paginate($limit)->appends($request->query());
+
+      return Cache::remember($fullUrl, 60, function() use ($animals){
+        return response($animals, Response::HTTP_OK);
+      });
     }
 
     /**

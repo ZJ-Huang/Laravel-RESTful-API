@@ -75,6 +75,16 @@ class AnimalController extends Controller
      */
     public function store(Request $request)
     {
+      $this->validate($request, [
+        'type_id' => 'nullable|integer',
+        'name' => 'required|string|max:255',
+        'birthday' => 'nullable|date',
+        'area' => 'nullable|string|max:255',
+        'fix' => 'required|boolean',
+        'description' => 'nullable',
+        'personality' => 'nullable',
+      ]);
+      $request['user_id'] = 1;
       $animal = Animal::create($request->all());
       $animal = $animal->refresh();
       return response($animal, Response::HTTP_CREATED);

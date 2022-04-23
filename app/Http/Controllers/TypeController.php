@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Type;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\Response;
 
 class TypeController extends Controller
 {
@@ -14,7 +16,11 @@ class TypeController extends Controller
      */
     public function index()
     {
-        //
+        $types = Type::get();
+
+        return response([
+            'data' => $types
+        ], Response::HTTP_OK);
     }
 
     /**
@@ -35,7 +41,24 @@ class TypeController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $this->validate($request, [
+            'name' => [
+                'required',
+                'max :50',
+                Rule::unique('types', 'name')
+            ],
+            'sort' => 'nullable|integer',
+        ]);
+
+        if (!isset($request->sort)) {
+            $max = Type::max('sort');
+            $request['sort'] = $max + 1;
+        }
+        $type = Type::create($request->all());
+
+        return response([
+            'data' => $type
+        ], Response::HTTP_CREATED);
     }
 
     /**
@@ -46,7 +69,9 @@ class TypeController extends Controller
      */
     public function show(Type $type)
     {
-        //
+        return response([
+            'data' => $type
+        ], Response::HTTP_OK);
     }
 
     /**
@@ -69,7 +94,19 @@ class TypeController extends Controller
      */
     public function update(Request $request, Type $type)
     {
-        //
+        $this->validate($request, [
+            'name' => [
+                'max :50',
+                Rule::unique('types', 'name')->ignore($type->name, 'name')
+            ],
+            'sort' => 'nullable|integer',
+        ]);
+
+        $type->update($request->all());
+
+        return response([
+            'data' => $type
+        ], Response::HTTP_OK);        
     }
 
     /**
@@ -80,6 +117,7 @@ class TypeController extends Controller
      */
     public function destroy(Type $type)
     {
-        //
+        $type->delete();
+        return response(null, Response::HTTP_NO_CONTENT);
     }
 }

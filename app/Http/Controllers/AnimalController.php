@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\AnimalResource;
 use App\Models\Animal;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -87,7 +88,7 @@ class AnimalController extends Controller
       $request['user_id'] = 1;
       $animal = Animal::create($request->all());
       $animal = $animal->refresh();
-      return response($animal, Response::HTTP_CREATED);
+      return new AnimalResource($animal);
     }
 
     /**
@@ -98,7 +99,7 @@ class AnimalController extends Controller
      */
     public function show(Animal $animal)
     {
-        return response($animal, Response::HTTP_OK);
+        return new AnimalResource($animal);
     }
 
     /**
@@ -132,7 +133,7 @@ class AnimalController extends Controller
       ]);
       $request['user_id'] = 1;
       $animal->update($request->all());
-      return response($animal, Response::HTTP_OK);
+      return new AnimalResource($animal);
     }
 
     /**

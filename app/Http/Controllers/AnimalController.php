@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\AnimalResource;
+use App\Http\Resources\AnimalCollection;
 use App\Models\Animal;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -29,7 +30,7 @@ class AnimalController extends Controller
 
       $limit = $request->limit ?? 10;
 
-      $query = Animal::query();
+      $query = Animal::query()->with('type');
 
       if (isset($request->filters)) {
         $filters = explode(',', $request->filters);
@@ -54,7 +55,7 @@ class AnimalController extends Controller
       $animals = $query->paginate($limit)->appends($request->query());
 
       return Cache::remember($fullUrl, 60, function() use ($animals){
-        return response($animals, Response::HTTP_OK);
+        return new AnimalCollection($animals);
       });
     }
 
